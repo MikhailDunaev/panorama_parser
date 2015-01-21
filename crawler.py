@@ -2,7 +2,8 @@ import requests
 import argparse
 import os
 import re
-import urlparse
+import urllib.parse
+from functools import reduce
 
 CUBE_SIDES=['front','back','right','left','down','up']
 
@@ -12,25 +13,27 @@ def link_generator(base_url, magnification, side):
         sides=[side,]
     else:
         sides=CUBE_SIDES
+    
     for current_side in sides:
         for ttt in [(i,j,k) for i in range(magnification+1) for j in range(i+1) for k in range(i+1)]:
-            print current_side
-            yield base_url.format(current_side,i,j,k), ttt
+            print(current_side)
+            yield base_url.format(current_side,ttt[0],ttt[1],ttt[2]), ttt
+            #yield base_url.format(current_side,i,j,k), ttt
 
 def generate_base_url(url):
-
 
     url = re.sub('https','http',url)
     base = re.sub('/\d+/\d+/\d+.jpg','/{}/{}/{}.jpg',url)
     base = re.sub('/({})/'.format('|'.join(CUBE_SIDES)),'/{}/',base)
-    print base
+    print(base)
     return base
 
 def generate_base_path(url):
 
     baseurl = re.sub('/\d+/\d+/\d+.jpg','',url)
-    path = reduce(os.path.join, urlparse.urlparse(baseurl).path.split('/'), '.')
+    path = reduce(os.path.join, urllib.parse.urlparse(baseurl).path.split('/'), '.')
     return path
+
 def main(url, magnification, side):
 
     base_url = generate_base_url(url)
@@ -44,9 +47,9 @@ def main(url, magnification, side):
             filename = os.path.join(path,"{}_{}_{}.jpg".format(*ttt))
             with open(filename,'wb') as fw:
                 fw.write(r.content)
-                print "Succesfully wrote {}".format(filename)
+                print("Succesfully wrote {}".format(filename))
         except:
-            print "Failed to get url", current_url
+            print("Failed to get url", current_url)
             import traceback
             traceback.print_exc()
 
